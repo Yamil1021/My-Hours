@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App Entrenamiento</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+<body>
+
+<div id="homeScreen">
+  <button onclick="iniciarSesion()">Iniciar sesión</button>
+  <p class="creditos">Este app creado por Carlos y Ernesto</p>
+</div>
+
+<div id="app" class="oculto">
+  <button onclick="finalizarSesion()" class="finalizar-btn">Finalizar sesión</button>
+  <h1>Entrenamientos</h1>
+  <div class="categorias">
+    <button onclick="mostrar('facil')">Fácil</button>
+    <button onclick="mostrar('medio')">Mediano</button>
+    <button onclick="mostrar('extremo')">Extremo</button>
+    <button onclick="mostrar('custom')">Custom</button>
+  </div>
+
+  <div id="contenido"></div>
+
+  <div id="descanso" class="oculto">
+    <p id="cronometro">02:00</p>
+    <button onclick="detenerAlarma()">Detener alarma</button>
+  </div>
+</div>
+
+<audio id="alarma" src="alarma.mp3" preload="auto"></audio>
+<script src="script.js"></script>
+</body>
+</html>
+body {
+  margin: 0;
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 10px;
+  background: #444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #666;
+}
+
+.creditos {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #222;
+}
+
+.categorias {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.oculto {
+  display: none;
+}
+
+input {
+  padding: 6px;
+  margin: 5px;
+  border-radius: 6px;
+  border: none;
+}
+
+@media (max-width: 600px) {
+  .categorias {
+    flex-direction: column;
+  }
+}
+const ejercicios = {
+  facil: [
+    { nombre: "Sentadillas", reps: 10 },
+    { nombre: "Saltos", reps: 15 }
+  ],
+  medio: [
+    { nombre: "Flexiones", reps: 20 },
+    { nombre: "Abdominales", reps: 25 }
+  ],
+  extremo: [
+    { nombre: "Burpees", reps: 30 },
+    { nombre: "Sprints", reps: 40 }
+  ],
+};
+
+let custom = [];
+
+function iniciarSesion() {
+  document.getElementById("homeScreen").classList.add("oculto");
+  document.getElementById("app").classList.remove("oculto");
+}
+
+function finalizarSesion() {
+  document.getElementById("app").classList.add("oculto");
+  document.getElementById("homeScreen").classList.remove("oculto");
+}
+
+function mostrar(tipo) {
+  const cont = document.getElementById("contenido");
+  cont.innerHTML = "";
+  const lista = tipo === "custom" ? custom : ejercicios[tipo];
+
+  if (tipo === "custom") {
+    cont.innerHTML += `
+      <input type="text" id="nuevoEj" placeholder="Nombre del ejercicio">
+      <input type="number" id="nuevoRep" placeholder="Reps">
+      <button onclick="agregarCustom()">Añadir</button>
+    `;
+  }
+
+  lista.forEach((e, i) => {
+    cont.innerHTML += `
+      <div>
+        <strong>${e.nombre}</strong> - Repeticiones: ${e.reps}
+        <button onclick="iniciarDescanso()">Descanso</button>
+      </div>
+    `;
+  });
+}
+
+function agregarCustom() {
+  const nombre = document.getElementById("nuevoEj").value;
+  const reps = parseInt(document.getElementById("nuevoRep").value);
+  if (nombre && reps > 0) {
+    custom.push({ nombre, reps });
+    mostrar("custom");
+  }
+}
+
+let tiempo = 120;
+let intervalo;
+
+function iniciarDescanso() {
+  tiempo = 120;
+  actualizarCronometro();
+  document.getElementById("descanso").classList.remove("oculto");
+
+  intervalo = setInterval(() => {
+    tiempo--;
+    actualizarCronometro();
+    if (tiempo === 0) {
+      clearInterval(intervalo);
+      document.getElementById("alarma").play();
+    }
+  }, 1000);
+}
+
+function actualizarCronometro() {
+  const min = String(Math.floor(tiempo / 60)).padStart(2, "0");
+  const seg = String(tiempo % 60).padStart(2, "0");
+  document.getElementById("cronometro").textContent = `${min}:${seg}`;
+}
+
+function detenerAlarma() {
+  const a = document.getElementById("alarma");
+  a.pause();
+  a.currentTime = 0;
+  document.getElementById("descanso").classList.add("oculto");
+}
+{
+  "name": "Entrenamiento App",
+  "short_name": "EntrenoApp",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+self.addEventListener("install", e => {
+  e.waitUntil(
+    caches.open("v1").then(cache => cache.addAll([
+      "index.html", "style.css", "script.js", "alarma.mp3"
+    ]))
+  );
+});
+
+self.addEventListener("fetch", e => {
+  e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+});
+
