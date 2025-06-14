@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Hours</title>
+  <link rel="stylesheet" href="styles.css" />
+
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log("Service Worker registrado"));
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">My Hours</h1>
+    <div id="categories-container"></div>
+    <div class="total-container">
+      <span>Total Horas: <span id="total-hours">0</span></span>
+      <span>Total $: <span id="total-money">$0.00</span></span>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
